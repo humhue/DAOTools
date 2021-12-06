@@ -27,11 +27,11 @@ When patching the whole QUDAO files extracted from the .erf file (242 .dlg files
 First, set up this library as explained in the previous step\
 Then, download the mod at https://www.nexusmods.com/dragonage/mods/4689/?tab=files \
 Extract the .zip file and open the .dazip file as if it was a normal .zip one\
-Now browse to Contents/addins/qwinn_fixpack_3/module/data, you'll find the qwinn_fixpack_3_module.erf file
-That's the file we have to patch
-You can extract the files inside an .erf by using the Dragon Age Toolset
-Assumed that we have this library installed we can write in the path we cloned it the command:
-    python3 DAOTools 'directory_path_to_extracted_files' 'qwinn_fixpack_3_module_patched.erf'
-After this, we can delete the .erf in Contents/addins/qwinn_fixpack_3/module/data, replace it with the patched version, and changing the name again to 'qwinn_fixpack_3_module.erf'
+Now browse to Contents/addins/qwinn_fixpack_3/module/data, you'll find the qwinn_fixpack_3_module.erf file\
+That's the file we have to patch\
+You can extract the files inside an .erf by using the Dragon Age Toolset\
+Assumed that we have this library installed we can write in the path we cloned it the command:\
+    python3 DAOTools 'directory_path_to_extracted_files' 'qwinn_fixpack_3_module_patched.erf'\
+After this, we can delete the .erf in Contents/addins/qwinn_fixpack_3/module/data, replace it with the patched version, and changing the name again to 'qwinn_fixpack_3_module.erf'\
 Now you just have to zip the 'Contents' dir with the 'Manifest.xml' again, and rename it "QUDAO Fixpack v3
 _5_patched.dazip' or whatever you feel like
