@@ -58,12 +58,11 @@ def main():
         sys.exit(1)
 
     try:
-        filename = sys.argv[2]
+        file_path = sys.argv[2]
     except IndexError:
         print("You did not specify a path for the .erf file")
         sys.exit(1)
 
-    file_path = os.getcwd() + "/" + filename
     build_erf(dir_path, file_path)
 
 
