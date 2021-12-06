@@ -1,6 +1,6 @@
 # DAOTools
 This is a set of tools for Dragon Age: Origins modding.\
-It can patch .dlg files text lines, build an .erf file and view the contents of files in GFF and ERF format.
+It can patch the text lines of .dlg files, build an .erf file, and view the contents of files in GFF and ERF format.
 
 I did this to fix the text lines of .dlg files, that once edited in the Dragon Age Toolset, from not being language-specific, got replaced with english ones.
 
@@ -15,11 +15,10 @@ Replacing the string offset with 0 is enough to fix this\
 The program looks for CONVERSATION_LINE_TEXT (actually not only that), and edits the string offset to 0 (without deleting the orphaned data, since the size difference is minimal)\
 It does this for every .dlg file inside a directory with extracted .erf files, and builds the .erf file again\
 
-The program is pretty slow at patching .dlg files because parsing the whole file is involved in the process
-
-When patching the whole QUDAO files extracted from the .erf file, it can need as long as 10 minutes to process, it depends on the number of cores you CPU can employ at the same time, feel free to report the execution time  
+The program is pretty slow at patching a .dlg file, because parsing the whole file is required\
+When patching the whole QUDAO files extracted from the .erf file (242 .dlg files), it can need as long as 10 minutes to process them, it depends on the number of cores your CPU has got, feel free to report the execution time in the respective issue 
 
 # How to use it
     pip3 install construct
     git clone https://github.com/humhue/DAOTools.git
-    python3 DAOTools 'directory_path_to_extracted_files' 'erf_file_name_patched.erf'
+    python3 DAOTools 'directory_path_to_extracted_files' 'new_erf_file_patched.erf'
