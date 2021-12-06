@@ -32,6 +32,6 @@ That's the file we have to patch\
 You can extract the files inside an .erf by using the Dragon Age Toolset\
 Assumed that we have this library installed we can write in the path we cloned it the command:\
     python3 DAOTools 'directory_path_to_extracted_files' 'qwinn_fixpack_3_module_patched.erf'\
-After this, we can delete the .erf in Contents/addins/qwinn_fixpack_3/module/data, replace it with the patched version, and changing the name again to 'qwinn_fixpack_3_module.erf'\
-Now you just have to zip the 'Contents' dir with the 'Manifest.xml' again, and rename it "QUDAO Fixpack v3
+After this, we can delete the .erf in Contents/addins/qwinn_fixpack_3/module/data, replace it with the patched version, and change the name again to 'qwinn_fixpack_3_module.erf'\
+Now you just have to zip the 'Contents' dir with the 'Manifest.xml' file, and rename it "QUDAO Fixpack v3
 _5_patched.dazip' or whatever you feel like
