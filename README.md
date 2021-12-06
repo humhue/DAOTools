@@ -25,7 +25,7 @@ When patching the whole QUDAO files extracted from the .erf file (242 .dlg files
 
 # How to fix QUDAO
 First, set up this library as explained in the previous step\
-Then, download the mod at https://www.nexusmods.com/dragonage/mods/4689/?tab=files\
+Then, download the mod at https://www.nexusmods.com/dragonage/mods/4689/?tab=files \
 Extract the .zip file and open the .dazip file as if it was a normal .zip one\
 Now browse to Contents/addins/qwinn_fixpack_3/module/data, you'll find the qwinn_fixpack_3_module.erf file
 That's the file we have to patch
