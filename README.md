@@ -17,6 +17,6 @@ It does this for every .dlg file inside a directory with extracted .erf files, a
 The program is pretty slow at patching .dlg files because parsing the whole file is involved in the process
 
 # How to use it
-> pip3 install construct
-> git clone https://github.com/humhue/DAOTools.git
-> python3 DAOTools 'directory_path_to_extracted_files' 'erf_file_name_patched.erf'
+    pip3 install construct
+    git clone https://github.com/humhue/DAOTools.git
+    python3 DAOTools 'directory_path_to_extracted_files' 'erf_file_name_patched.erf'
