@@ -17,7 +17,7 @@ It does this for every .dlg file inside a directory with extracted .erf files, a
 
 The program is pretty slow at patching .dlg files because parsing the whole file is involved in the process
 
-When patching the whole QUDAO files extracted from the .erf file, it can need as long as 10 minutes to process, it depends on the number of cores you CPU can employ at the same time: feel free to report the execution time  
+When patching the whole QUDAO files extracted from the .erf file, it can need as long as 10 minutes to process, it depends on the number of cores you CPU can employ at the same time, feel free to report the execution time  
 
 # How to use it
     pip3 install construct
