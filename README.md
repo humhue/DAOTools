@@ -7,7 +7,8 @@ I did this to fix the text lines of .dlg files, that once edited in the Dragon A
 I noticed, that the original .dlg files of the game, had both NTRY and RPLY *CONVERSATION_LINE_TEXT* set like this:\
     string_offset = 0\
 while the modified QUDAO .dlg files had either:\
-    string_offset = 4294967295 (0xFFFFFFFF) (I don't know what this is for, but in the toolset this is represented as '{index}:', while 0x00 is '{index}')\
+    string_offset = 4294967295 (0xFFFFFFFF)
+    (I don't know what this is for, but in the toolset this is represented as '{index}:', while 0x00 is '{index}')\
     or:\
     string_offset = an offset pointing to a string
 
@@ -21,7 +22,7 @@ When patching all of the QUDAO files extracted from the .erf file (242 .dlg file
 # How to use it
     pip3 install construct
     git clone https://github.com/humhue/DAOTools.git
-    python3 DAOTools *directory_path_to_extracted_files* *new_erf_file_patched.erf*
+    python3 DAOTools 'directory_path_to_extracted_files' 'new_erf_file_patched.erf'
 
 # How to fix QUDAO
 First, set up this library as explained in the previous step.\
@@ -32,8 +33,9 @@ That's the file we have to patch.\
 You can extract the files inside an .erf by using the Dragon Age Toolset.\
 Assumed that we have this library installed, we can write in the path we cloned it the command:
 
-    python3 DAOTools 'directory_path_to_extracted_files' 'qwinn_fixpack_3_module_patched.erf'\
-After this, we can delete the .erf in Contents/addins/qwinn_fixpack_3/module/data, replace it with the patched version, and change the name again to 'qwinn_fixpack_3_module.erf'.\
-You now have to zip the *Contents* dir with the *Manifest.xml* file, and rename it *QUDAO Fixpack v3
+    python3 DAOTools 'directory_path_to_extracted_files' 'qwinn_fixpack_3_module_patched.erf'
+
+After this, we can delete the .erf in *Contents/addins/qwinn_fixpack_3/module/data*, replace it with the patched version, and change the name again to *qwinn_fixpack_3_module.erf*.\
+You now have to zip the *Contents* directory with the *Manifest.xml* file, and rename it *QUDAO Fixpack v3
 _5_patched.dazip* or whatever you feel like.
 Now all you have to do is to install the .dazip file as you normally would.
