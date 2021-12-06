@@ -13,12 +13,10 @@ def main():
         sys.exit(1)
 
     try:
-        filename = sys.argv[2] # qwinn_fixpack_3_module_patched.erf
+        file_path = sys.argv[2] # qwinn_fixpack_3_module_patched.erf
     except IndexError:
         print("You did not specify a path for the .erf file")
         sys.exit(1)
-
-    file_path = os.getcwd() + "/" + filename
 
     print("Patching .dlg files...")
     dlg_patcher.patch_all_dlgs(dir_path)
