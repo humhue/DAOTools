@@ -32,15 +32,17 @@ def patch_dlg(file_path):
                             mm[tell:tell+4] = b"\x00\x00\x00\x00"
 
 def patch_all_dlgs(dir_path):
-    dlg_files = [f for f in os.listdir(dir_path) if os.path.isfile(dir_path + "/" + f) and f.endswith(".dlg")]
+    dlg_files = [f for f in os.listdir(dir_path)\
+        if os.path.isfile(os.path.join(dir_path, f))\
+            and f.endswith(".dlg")\
+    ]
 
     with multiprocessing.Pool() as pool:
-        pool.map(patch_dlg, [dir_path + "/" + dlg_file for dlg_file in dlg_files])
+        pool.map(patch_dlg, [os.path.join(dir_path, dlg_file) for dlg_file in dlg_files])
 
 def main():
     # python3 dlg_patcher.py '/home/x/Documents/DA/QUDAO/extracted_files'
     t1 = time.time()
-
 
     try:
         dir_path = sys.argv[1]
@@ -48,10 +50,8 @@ def main():
         print("You did not specify a path with the extracted files")
         sys.exit(1)
 
-
+    t1 = time.time()
     patch_all_dlgs(dir_path)
-
-
     t2 = time.time() - t1
     print(str(t2)+"s")
 
