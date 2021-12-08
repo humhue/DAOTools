@@ -1,5 +1,5 @@
 from construct import *
-from utils import load_id_names
+from .utils import load_id_names
 
 name_by_id, id_by_name = load_id_names()
 

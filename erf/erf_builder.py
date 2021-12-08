@@ -11,10 +11,10 @@ def utf16(s):
     return s.encode("utf-16-le")
 
 def build_erf(dir_path, file_path):
-    embedded_files = [f for f in os.listdir(dir_path)\
+    embedded_filenames = sorted([f for f in os.listdir(dir_path)\
         if os.path.isfile(os.path.join(dir_path, f))\
-    ]
-    file_count = len(embedded_files)
+    ])
+    file_count = len(embedded_filenames)
 
     today = datetime.date.today()
     this_year = int(today.strftime("%Y"))
@@ -31,21 +31,25 @@ def build_erf(dir_path, file_path):
 
         data_block_offset = 32 + file_count * 72 # header_length + file_count * table_of_content_length
         acc = data_block_offset
-        for embedded_file in embedded_files:
-            bytes_.extend(utf16(embedded_file)) # name
-            bytes_.extend(bytes(64 - len(embedded_file) * 2)) # so that the name is 64 byte long
+
+        for embedded_filename in embedded_filenames:
+            bytes_.extend(utf16(embedded_filename)) # name
+            bytes_.extend(bytes(64 - len(embedded_filename) * 2)) # so that the name is 64 byte long
             bytes_.extend(int32(acc)) # offset
-            size = os.path.getsize(os.path.join(dir_path, embedded_file)) # get the size of the file in bytes
+
+            size = os.path.getsize(os.path.join(dir_path, embedded_filename)) # get the size of the file in bytes
             bytes_.extend(int32(size)) # size of the file in bytes
             acc += size
 
+        # flush bytes_
         erf_file.write(bytes_)
 
         # erf_file.tell() is now data_block_offset
-        for embedded_file in embedded_files:
-            with open(os.path.join(dir_path, embedded_file), "rb") as embedded_f:
-                # copy the data of the embedded_file to the erf_file
-                data = embedded_f.read()
+
+        for embedded_filename in embedded_filenames:
+            with open(os.path.join(dir_path, embedded_filename), "rb") as embedded_file:
+                # read the data from embedded_file and write it to erf_file
+                data = embedded_file.read()
                 erf_file.write(data)
 
 def main():
@@ -54,7 +58,7 @@ def main():
     try:
         dir_path = sys.argv[1]
     except IndexError:
-        print("You did not specify a path with the extracted files")
+        print("You did not specify a path to the extracted files")
         sys.exit(1)
 
     try:

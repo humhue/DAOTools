@@ -8,7 +8,8 @@ def unpack_int32(buf):
     return struct.unpack("<I", buf)[0]
 
 def unpack_utf16(buf):
-    return struct.unpack("<"+str(len(buf))+"s", buf)[0].decode("utf-16-le")\
+    return struct.unpack("<"+str(len(buf))+"s", buf)[0]\
+        .decode("utf-16-le")\
         .encode("utf-8")\
         .rstrip(b"\x00")\
         .decode("utf-8")
@@ -21,15 +22,14 @@ def extract_erf(file_path, dir_path):
         os.mkdir(dir_path)
 
     with open(file_path, "rb") as erf_file:
-        header = erf_file.read(20) # erf_file.read(32)
+        header = erf_file.read(32)
         # magic = unpack_utf16(header[:16])
         file_count = unpack_int32(header[16:20])
         # delta_years = unpack_int32(header[20:24])
         # delta_days = unpack_int32(header[24:28])
         # padding = unpack_int32(header[28:32])
 
-        erf_file.seek(32)
-        toc_length = file_count * 72 # file_count * table_of_content_length
+        toc_length = file_count * 72 # file_count * table_of_contents_length
         toc = erf_file.read(toc_length) # table_of_contents
         counter = 0
         for _ in range(file_count):
@@ -38,10 +38,16 @@ def extract_erf(file_path, dir_path):
             entry_size = unpack_int32(toc[counter+68:counter+72])
             counter += 72
 
+            # we have to seek here, because the original DA Toolset or whatever
+            # some people (namely Qwinn) used to build .erf files, can add a
+            # certain number of 0 bytes before a file content, so that
+            # (toc[i].entry_offset + toc[i].entry_size) == toc[i+1].entry_offset
+            # is not always true
             erf_file.seek(entry_offset)
-            with open(os.path.join(dir_path, entry_name), "wb") as embedded_f:
+            with open(os.path.join(dir_path, entry_name), "wb") as embedded_file:
+                # read the data from erf_file and write it to embedded_file
                 data = erf_file.read(entry_size)
-                embedded_f.write(data)
+                embedded_file.write(data)
 
 def main():
     # python3 erf_extractor.py 'qwinn_fixpack_3_module.erf' '/home/x/Documents/DA/QUDAO/extracted_files'

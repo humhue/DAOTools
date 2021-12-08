@@ -31,4 +31,5 @@ def main():
     erf = erf_struct.parse_file(filename)
     print(erf)
 
-main()
+if __name__ == "__main__":
+    main()

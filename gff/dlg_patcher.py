@@ -1,5 +1,5 @@
-import gff_parser
-from gff_struct import gff_struct
+from . import gff_parser
+from .gff_struct import gff_struct
 import mmap
 import multiprocessing
 import os
@@ -7,6 +7,7 @@ import sys
 import time
 
 def patch_dlg(file_path):
+    print(file_path)
     gff = gff_struct.parse_file(file_path)
     data_struct = gff_parser.generate_tree_struct(gff)
     data = data_struct.parse_file(file_path)
@@ -32,13 +33,13 @@ def patch_dlg(file_path):
                             mm[tell:tell+4] = b"\x00\x00\x00\x00"
 
 def patch_all_dlgs(dir_path):
-    dlg_files = [f for f in os.listdir(dir_path)\
+    dlg_filenames = [f for f in os.listdir(dir_path)\
         if os.path.isfile(os.path.join(dir_path, f))\
             and f.endswith(".dlg")\
     ]
 
     with multiprocessing.Pool() as pool:
-        pool.map(patch_dlg, [os.path.join(dir_path, dlg_file) for dlg_file in dlg_files])
+        pool.map(patch_dlg, [os.path.join(dir_path, dlg_filename) for dlg_filename in dlg_filenames])
 
 def main():
     # python3 dlg_patcher.py '/home/x/Documents/DA/QUDAO/extracted_files'
@@ -47,7 +48,7 @@ def main():
     try:
         dir_path = sys.argv[1]
     except IndexError:
-        print("You did not specify a path with the extracted files")
+        print("You did not specify a path to the extracted files")
         sys.exit(1)
 
     t1 = time.time()
