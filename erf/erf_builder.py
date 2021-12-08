@@ -31,12 +31,10 @@ def build_erf(dir_path, file_path):
 
         data_block_offset = 32 + file_count * 72 # header_length + file_count * table_of_content_length
         acc = data_block_offset
-
         for embedded_filename in embedded_filenames:
             bytes_.extend(utf16(embedded_filename)) # name
             bytes_.extend(bytes(64 - len(embedded_filename) * 2)) # so that the name is 64 byte long
             bytes_.extend(int32(acc)) # offset
-
             size = os.path.getsize(os.path.join(dir_path, embedded_filename)) # get the size of the file in bytes
             bytes_.extend(int32(size)) # size of the file in bytes
             acc += size
