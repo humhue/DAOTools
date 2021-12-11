@@ -19,22 +19,22 @@ def main():
         print("You did not specify a path for the .erf file")
         sys.exit(1)
 
-    with tempfile.TemporaryDirectory() as dir_path:
+    with tempfile.TemporaryDirectory() as temp_dir_path:
         print("Extracting the files...")
         t1 = time.time()
-        erf.extract_erf(old_file_path, dir_path)
+        erf.extract_erf(old_file_path, temp_dir_path)
         t2 = time.time() - t1
         print("Finished extracting in " + str(t2) + "s!")
 
         print("Patching .dlg files...")
         t1 = time.time()
-        gff.patch_all_dlgs(dir_path)
+        gff.patch_all_dlgs(temp_dir_path)
         t2 = time.time() - t1
         print("Finished patching in " + str(t2) + "s!")
 
         print("Building the .erf file...")
         t1 = time.time()
-        erf.build_erf(dir_path, new_file_path)
+        erf.build_erf(temp_dir_path, new_file_path)
         t2 = time.time() - t1
         print("Finished building in " + str(t2) + "s!")
 

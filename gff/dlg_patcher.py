@@ -14,6 +14,7 @@ def patch_dlg(file_path):
 
     with open(file_path, "r+b") as f, mmap.mmap(f.fileno(), 0) as mm:
         for conversation_line in data.CONVERSATION_LINE_LIST.List.reference_data.GenericWrapper:
+            # we fix CONVERSATION_LINE_TEXT string first
             tell = int(conversation_line\
                 .reference_data.CONVERSATION_LINE_TEXT.TLKString.ECString.tell)
             mm[tell:tell+4] = b"\x00\x00\x00\x00"
@@ -21,6 +22,7 @@ def patch_dlg(file_path):
             conversation_line_cutscene = conversation_line.reference_data\
                 .CONVERSATION_LINE_CUTSCENE.GenericWrapper.reference_data
 
+            # then we fix CONVERSATION_LINE_CUTSCENE.CUTSCENE_ACTORS[X].CUTSCENE_ACTOR_ACTION_QUEUE[x].TEXT
             cutscene_actors = getattr(conversation_line_cutscene, "CUTSCENE_ACTORS", None)
             if cutscene_actors is not None:
                 for cutscene_actor in cutscene_actors.List.reference_data.ACTR:
@@ -28,6 +30,16 @@ def patch_dlg(file_path):
                         .CUTSCENE_ACTOR_ACTION_QUEUE.List.reference_data\
                         .GenericWrapper:
                         text = getattr(cutscene_actor_action.reference_data, "TEXT", None)
+                        if text is not None:
+                            tell = int(text.TLKString.ECString.tell)
+                            mm[tell:tell+4] = b"\x00\x00\x00\x00"
+
+            # finally, we fix ONVERSATION_LINE_CUTSCENE.CUTSCENE_HENCHMAN_ACTIONS[X].TEXT
+            cutscene_henchman_actions = getattr(conversation_line_cutscene, "CUTSCENE_HENCHMAN_ACTIONS", None)
+            if cutscene_henchman_actions is not None:
+                if cutscene_henchman_actions.List.reference_data != None:
+                    for cutscene_henchman_action in cutscene_henchman_actions.List.reference_data.GenericWrapper:
+                        text = getattr(cutscene_henchman_action.reference_data, "TEXT", None)
                         if text is not None:
                             tell = int(text.TLKString.ECString.tell)
                             mm[tell:tell+4] = b"\x00\x00\x00\x00"
