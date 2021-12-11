@@ -13,7 +13,7 @@ while the modified QUDAO .dlg files had either:\
     string_offset = an offset pointing to a string
 
 Replacing the string offset with 0 is enough to fix this.\
-The program extracts the contents of an .erf file, then, for each .dlg file looks for *CONVERSATION_LINE_TEXT* (actually not only that), edits the string offset to 0 (without deleting the orphaned data, since the size difference is minimal), and after doing that, it builds the .erf file again.\
+The program extracts the contents of an .erf file, then, for each .dlg file looks for *CONVERSATION_LINE_TEXT* (actually not only that), edits the string offset to 0 (without deleting the orphaned data, since the size difference is minimal), and after doing that, it builds the .erf file again.
 
 The program is pretty slow at patching .dlg files, because all of them have to be parsed.\
 When patching all of the QUDAO files extracted from the .erf file (242 .dlg files), it can need as long as 10 minutes to process them: it depends on the number of cores your CPU has got, feel free to report the execution time in the related issue.
@@ -24,7 +24,9 @@ When patching all of the QUDAO files extracted from the .erf file (242 .dlg file
     python3 DAOTools old.erf patched.erf
 
 # How to fix QUDAO
-First, set up this package as explained in the previous step.\
+If you want, you can just download the patched files in the release section and install them, if you don't, follow the next steps.
+
+First, set up this package as explained previously.\
 Then, download QUDAO at *https://www.nexusmods.com/dragonage/mods/4689/?tab=files*. \
 Extract the .zip file and the .dazip file (like a normal .zip)\
 Now browse to *Contents/addins/qwinn_fixpack_3/module/data*, you'll find a file named *qwinn_fixpack_3_module.erf*, that's the one we have to patch.\
