@@ -34,7 +34,7 @@ def patch_dlg(file_path):
                             tell = int(text.TLKString.ECString.tell)
                             mm[tell:tell+4] = b"\x00\x00\x00\x00"
 
-            # finally, we fix ONVERSATION_LINE_CUTSCENE.CUTSCENE_HENCHMAN_ACTIONS[X].TEXT
+            # finally, we fix CONVERSATION_LINE_CUTSCENE.CUTSCENE_HENCHMAN_ACTIONS[X].TEXT
             cutscene_henchman_actions = getattr(conversation_line_cutscene, "CUTSCENE_HENCHMAN_ACTIONS", None)
             if cutscene_henchman_actions is not None:
                 if cutscene_henchman_actions.List.reference_data != None:

@@ -1,21 +1,14 @@
 # DAOTools
 This is a set of tools for Dragon Age: Origins modding.\
-This package can patch language-specific .dlg files, extract and build .erf files, and view the contents of files in GFF and ERF format.\
-I made this to fix the text lines of .dlg files, that once edited in the original Dragon Age Toolset, from not being language-specific, got replaced with english text.
+This package can patch language-specific .dlg, .plo, .cut and .tlk files, extract and build .erf files, and view the contents of files in GFF and ERF format.\
+I made this to fix the text lines of .dlg (and other) files, that once edited in the original Dragon Age Toolset, from not being language-specific, got replaced with their english version.
 
 # How does it work
-I noticed, that the original .dlg files of the game, had both NTRY and RPLY *CONVERSATION_LINE_TEXT* set like this:\
-    string_offset = 0\
-while the modified QUDAO .dlg files had either:\
-    string_offset = 4294967295 (0xFFFFFFFF)
-    (I don't know what this is for, but in the toolset this is represented as '{index}:', while 0x00 is '{index}')\
-    or:\
-    string_offset = an offset pointing to a string
+It just removes the reference to the english text.\
+More specifically, it replaces the string offset with 0.\
+The main program extracts the contents of an .erf file, then, for each .dlg, .plo and .cut file, looks for strings, edits the string offset to 0 (without deleting the orphaned data, since the size difference is minimal), and after doing that, builds the .erf file again.
 
-Replacing the string offset with 0 is enough to fix this.\
-The program extracts the contents of an .erf file, then, for each .dlg file looks for *CONVERSATION_LINE_TEXT* (actually not only that), edits the string offset to 0 (without deleting the orphaned data, since the size difference is minimal), and after doing that, it builds the .erf file again.
-
-The program is pretty slow at patching .dlg files, because all of them have to be parsed.\
+The program is pretty slow at patching files, because all .dlg, .plo and .cut files have to be parsed.\
 When patching all of the QUDAO files extracted from the .erf file (242 .dlg files), it can need as long as 10 minutes to process them: it depends on the number of cores your CPU has got, feel free to report the execution time in the related issue.
 
 # How to use it
@@ -26,7 +19,7 @@ When patching all of the QUDAO files extracted from the .erf file (242 .dlg file
 # How to fix QUDAO
 **Disclaimer**\
 I'm not the author of QUDAO, available at *https://www.nexusmods.com/dragonage/mods/4689*, whose author is Paul Escalona (aka Qwinn).\
-I created only this toolset and a QUDAO patch to make QUDAO dialogues non-language-specific and thus enjoyable by non-english speakers.
+I created only this toolset and builded a QUDAO patch to make most QUDAO texts non-language-specific and thus enjoyable by non-english speakers.
 
 
 If you want, you can just download the patched files in the release section and install them, if you don't, follow the next steps.
