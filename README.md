@@ -24,6 +24,11 @@ When patching all of the QUDAO files extracted from the .erf file (242 .dlg file
     python3 DAOTools old.erf patched.erf
 
 # How to fix QUDAO
+**Disclaimer**\
+I'm not the author of QUDAO, available at *https://www.nexusmods.com/dragonage/mods/4689*, whose author is Paul Escalona (aka Qwinn).\
+I created only this toolset and a QUDAO patch to make QUDAO non-language-specific and thus enjoyable by non-english speakers.
+
+
 If you want, you can just download the patched files in the release section and install them, if you don't, follow the next steps.
 
 First, set up this package as explained previously.\
