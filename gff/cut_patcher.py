@@ -22,8 +22,10 @@ def patch_cut(file_path):
                     .GenericWrapper:
                     text = getattr(cutscene_actor_action.reference_data, "TEXT", None)
                     if text is not None:
-                        tell = int(text.TLKString.ECString.tell)
-                        mm[tell:tell+4] = b"\x00\x00\x00\x00"
+                        offset = int(text.TLKString.ECString.offset)
+                        if offset != 0xFFFFFFFF and offset != 0x00:
+                            tell = int(text.TLKString.ECString.tell)
+                            mm[tell:tell+4] = b"\x00\x00\x00\x00"
 
         # then, we fix data.CUTSCENE_HENCHMAN_ACTIONS[X].TEXT
         cutscene_henchman_actions = getattr(data, "CUTSCENE_HENCHMAN_ACTIONS", None)
@@ -32,9 +34,10 @@ def patch_cut(file_path):
                 for cutscene_henchman_action in cutscene_henchman_actions.List.reference_data.GenericWrapper:
                     text = getattr(cutscene_henchman_action.reference_data, "TEXT", None)
                     if text is not None:
-                        tell = int(text.TLKString.ECString.tell)
-                        mm[tell:tell+4] = b"\x00\x00\x00\x00"
-
+                        offset = int(text.TLKString.ECString.offset)
+                        if offset != 0xFFFFFFFF and offset != 0x00:
+                            tell = int(text.TLKString.ECString.tell)
+                            mm[tell:tell+4] = b"\x00\x00\x00\x00"
 
 def patch_all_cuts(dir_path):
     cut_filenames = [f for f in os.listdir(dir_path)\
@@ -43,7 +46,13 @@ def patch_all_cuts(dir_path):
     ]
 
     with multiprocessing.Pool() as pool:
-        pool.map(patch_cut, [os.path.join(dir_path, cut_filename) for cut_filename in cut_filenames])
+        pool.map(
+            patch_cut,
+            [
+                os.path.join(dir_path, cut_filename)
+                for cut_filename in cut_filenames
+            ]
+        )
 
 def main():
     # python3 cut_patcher.py '/home/x/Documents/DA/QUDAO/extracted_files'

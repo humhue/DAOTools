@@ -59,21 +59,21 @@ Generic = "Generic" / Struct(
     "reference_offset" / Int32ul,
 )
 
-struct_by_type_id = {
-    0: "UINT8" / Int8ul,
-    1: "INT8" / Int8sl,
-    2: "UINT16" / Int16ul,
-    3: "INT16" / Int16sl,
-    4: "UINT32" / Int32ul,
-    5: "INT32" / Int32sl,
-    6: "UINT64" / Int64ul,
-    7: "INT64" / Int64sl,
-    8: "FLOAT32" / Float32l,
-    9: "FLOAT64" / Float64l,
+struct_by_type_id = {        # as in the Dragon Age Toolset
+    0: "UINT8" / Int8ul,     # BYTE
+    1: "INT8" / Int8sl,      # CHAR
+    2: "UINT16" / Int16ul,   # WORD
+    3: "INT16" / Int16sl,    # SHORT
+    4: "UINT32" / Int32ul,   # DWORD
+    5: "INT32" / Int32sl,    # INT
+    6: "UINT64" / Int64ul,   # DWORD64
+    7: "INT64" / Int64sl,    # INT64
+    8: "FLOAT32" / Float32l, # FLOAT
+    9: "FLOAT64" / Float64l, # DOUBLE
     10: "Vector3f" / Padded(
         # theoretically, this should be just 'Array(3, Float32l)' (12 bits),
-        # but, a structure/type seems to need to be a multiple of 8, that's why
-        # we are wrapping the array into a 16 bit struct
+        # but, a structure/type seems to need to be a multiple of 8, that's
+        # why we are wrapping the array into a 16 bit struct
         16,
         Array(3, Float32l), # this is a 12 bit-length array
         b"\x00", # the byte that has to be repeated to lengthen up to 16 bit
@@ -108,7 +108,11 @@ class GenericWrapper(Subconstruct):
         obj = self.subcon._parse(stream, ctx, path)
 
         if obj.field_type.flags.is_struct:
-            if obj.field_type.type_id == 65535 and obj.field_type.flags.is_list and obj.field_type.flags.is_reference:
+            if (
+                obj.field_type.type_id == 65535
+                and obj.field_type.flags.is_list
+                and obj.field_type.flags.is_reference
+            ):
                 # this occurs when a generic struct field is empty,
                 # like a CUT in NTRY's CONVERSATION_LINE_CUTSCENE
                 # it would be better to check for 0xFFFF, but this works too
@@ -116,19 +120,21 @@ class GenericWrapper(Subconstruct):
             else:
                 if self.structs is None:
                     new_type = generate_struct_(
-                        struct=self.struct_array[
-                            obj.field_type.type_id
-                        ],
+                        struct=self.struct_array[obj.field_type.type_id],
                         struct_array=self.struct_array,
                         data_offset=self.data_offset,
                         struct_by_type_id=self.struct_by_type_id,
                         new_structs=self.structs,
                     )
                 else:
-                    struct_type = self.struct_array[obj.field_type.type_id].struct_type
+                    struct_type = self.struct_array[obj.field_type.type_id]\
+                        .struct_type
                     new_type = self.structs[struct_type]
         else:
-            if field.field_type.type_id == 14 or field.field_type.type_id == 17:
+            if (
+                field.field_type.type_id == 14
+                or field.field_type.type_id == 17
+            ):
                 new_type = self.struct_by_type_id[obj.field_type.type_id]
             else:
                 new_type = self.struct_by_type_id[obj.field_type.type_id]
@@ -136,7 +142,11 @@ class GenericWrapper(Subconstruct):
         if obj.field_type.flags.is_list and new_type != Pass:
             new_type = List(new_type, self.data_offset)
 
-        new_type = ReferenceWithOffset(new_type, obj.reference_offset, self.data_offset)
+        new_type = ReferenceWithOffset(
+            new_type,
+            obj.reference_offset,
+            self.data_offset,
+        )
 
         return new_type._parse(stream, ctx, path)
 
@@ -156,7 +166,10 @@ def generate_struct_(
     struct_by_type_id,
     new_structs=None,
 ):
-    if new_structs is not None and new_structs.get(struct.struct_type) is not None:
+    if (
+        new_structs is not None
+        and new_structs.get(struct.struct_type) is not None
+    ):
         return new_structs[struct.struct_type]
 
     # else
@@ -168,9 +181,7 @@ def generate_struct_(
         if field.field_type.flags.is_struct:
             # if it's a struct, we have to break it down
             new_type = generate_struct_(
-                struct=struct_array[
-                    field.field_type.type_id
-                ],
+                struct=struct_array[field.field_type.type_id],
                 struct_array=struct_array,
                 data_offset=data_offset,
                 struct_by_type_id=struct_by_type_id,
@@ -178,7 +189,10 @@ def generate_struct_(
             )
         else:
             # if it's a field, we can process it as such
-            if field.field_type.type_id == 14 or field.field_type.type_id == 17:
+            if (
+                field.field_type.type_id == 14
+                or field.field_type.type_id == 17
+            ):
                 new_type = struct_by_type_id[field.field_type.type_id](data_offset)
             else:
                 new_type = struct_by_type_id[field.field_type.type_id]

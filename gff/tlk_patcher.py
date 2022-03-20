@@ -15,8 +15,10 @@ def patch_tlk(file_path):
     with open(file_path, "r+b") as f, mmap.mmap(f.fileno(), 0) as mm:
         # we fix data.TALK_STRING_LIST.List.reference_data.STRN[x]
         for talk_string in data.TALK_STRING_LIST.List.reference_data.STRN:
-            tell = int(talk_string.TALK_STRING.ECString.tell)
-            mm[tell:tell+4] = b"\x00\x00\x00\x00"
+            offset = int(talk_string.TALK_STRING.ECString.offset)
+            if offset != 0xFFFFFFFF and offset != 0x00:
+                tell = int(talk_string.TALK_STRING.ECString.tell)
+                mm[tell:tell+4] = b"\x00\x00\x00\x00"
 
 def patch_all_tlks(dir_path):
     tlk_filenames = [f for f in os.listdir(dir_path)\
@@ -25,7 +27,13 @@ def patch_all_tlks(dir_path):
     ]
 
     with multiprocessing.Pool() as pool:
-        pool.map(patch_tlk, [os.path.join(dir_path, tlk_filename) for tlk_filename in tlk_filenames])
+        pool.map(
+            patch_tlk,
+            [
+                os.path.join(dir_path, tlk_filename)
+                for tlk_filename in tlk_filenames
+            ]
+        )
 
 def main():
     # python3 tlk_patcher.py '/home/x/Documents/DA/QUDAO/extracted_files'

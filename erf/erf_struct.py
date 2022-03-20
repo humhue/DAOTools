@@ -6,6 +6,15 @@ def utf_16_string(length):
         CString("utf-16-le"),
     )
 
+# from the toolset's command line ERF extractor:
+# -version: V2.0, V2.5, V1.0, this option is ignored when extracting
+#    V1.0: for older 16 byte resrefs
+#    V2.5: for DA's 32 byte resrefs
+#    V2.0: for the newest ERF version.
+# -type: erf, mod, hak, sav, ignored when extracting
+# -alignment: specifies the byte alignment of the resources
+#    default alignment is 4 bytes, ignored when extracting
+
 erf_struct = Struct(
     "header" / Struct(
         # all values are little-endian

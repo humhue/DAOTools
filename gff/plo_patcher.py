@@ -15,13 +15,17 @@ def patch_plo(file_path):
     with open(file_path, "r+b") as f, mmap.mmap(f.fileno(), 0) as mm:
         for plot in data.PLOT_PLOTS.List.reference_data.PLOT:
             # we fix first data.PLOT_PLOTS.List.reference_data.PLOT[x].PLOT_NAME
-            tell = plot.PLOT_NAME.TLKString.ECString.tell
-            mm[tell:tell+4] = b"\x00\x00\x00\x00"
+            offset = int(plot.PLOT_NAME.TLKString.ECString.offset)
+            if offset != 0xFFFFFFFF and offset != 0x00:
+                tell = int(plot.PLOT_NAME.TLKString.ECString.tell)
+                mm[tell:tell+4] = b"\x00\x00\x00\x00"
 
             for flag in plot.PLOT_FLAGS.List.reference_data.FLAG:
                 # and then data.PLOT_PLOTS.List.reference_data.PLOT[x].PLOT_FLAGS.List.reference_data.FLAG[x].PLOT_FLAG_JOURNAL
-                tell = flag.PLOT_FLAG_JOURNAL.TLKString.ECString.tell
-                mm[tell:tell+4] = b"\x00\x00\x00\x00"
+                offset = int(flag.PLOT_FLAG_JOURNAL.TLKString.ECString.offset)
+                if offset != 0xFFFFFFFF and offset != 0x00:
+                    tell = int(flag.PLOT_FLAG_JOURNAL.TLKString.ECString.tell)
+                    mm[tell:tell+4] = b"\x00\x00\x00\x00"
 
 def patch_all_plos(dir_path):
     plo_filenames = [f for f in os.listdir(dir_path)\
@@ -30,7 +34,13 @@ def patch_all_plos(dir_path):
     ]
 
     with multiprocessing.Pool() as pool:
-        pool.map(patch_plo, [os.path.join(dir_path, plo_filename) for plo_filename in plo_filenames])
+        pool.map(
+            patch_plo,
+            [
+                os.path.join(dir_path, plo_filename)
+                for plo_filename in plo_filenames
+            ]
+        )
 
 def main():
     # python3 plo_patcher.py '/home/x/Documents/DA/QUDAO/extracted_files'
