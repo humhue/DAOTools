@@ -1,0 +1,1 @@
+/Users/admin/.nimble/bin/nim c -d:danger --mm:arc --opt:speed --app:"gui" --passC:"-flto -O3" --passL:"-flto -O3 -Wl,-rpath,/opt/homebrew/lib" gui.nim

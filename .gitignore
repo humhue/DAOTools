@@ -1,0 +1,16 @@
+# Block absolutely everything by default
+*
+
+# Un-block only some directories
+!src/
+!src/**
+src/gui.app
+!vendor
+!vendor/**
+vendor/zippy/examples
+vendor/zippy/tests
+*.DS_Store
+
+# Un-block specific exact files
+!README.md
+!.gitignore
