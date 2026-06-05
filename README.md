@@ -41,8 +41,11 @@ If you want to compile the tool yourself from the source code, you will need the
 git clone [https://github.com/humhue/DAOTools.git](https://github.com/humhue/DAOTools.git)
 cd DAOTools
 
+# Compile the GUI (Windows Example)
+nim c -d:danger --mm:arc --opt:speed --app:gui -o:DAOTools.exe src/gui.nim
+
 # Compile the GUI (MacOS Example)
-nim c -d:danger --mm:arc --opt:speed --app:"gui" --passC:"-flto -O3" --passL:"-flto -O3 -Wl,-rpath,/opt/homebrew/lib" gui.nim
+nim c -d:danger --mm:arc --opt:speed --app:"gui" --passC:"-flto -O3" --passL:"-flto -O3 -Wl,-rpath,/opt/homebrew/lib" src/gui.nim
 ```
 
 ## How do I patch a mod? (e.g., QUDAO Fixpack)
