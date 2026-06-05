@@ -24,8 +24,16 @@ jobs:
       - name: Compile GUI
         run: nim c -d:danger --mm:arc --opt:speed --app:gui -o:DAOTools.exe src/gui.nim
 
+      - name: Bundle PCRE DLL
+        run: |
+          $nimPath = (Get-Command nim).Source
+          $nimBinDir = Split-Path $nimPath
+          Copy-Item "$nimBinDir\pcre64.dll" -Destination .
+
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
           name: DAOTools-Windows
-          path: DAOTools.exe
+          path: |
+            DAOTools.exe
+            pcre64.dll
