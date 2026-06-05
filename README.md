@@ -4,7 +4,7 @@
 
 I am not the author of the QUDAO Fixpack (originally created by Paul Escalona / Qwinn). I initially created this toolset specifically to patch QUDAO and make its text non-language-specific, allowing non-English speakers to enjoy the mod.
 
-**Want an international version of the fixpack?** Out of respect for the original author's permissions, I do not host pre-patched mod files. Instead, simply download this program from the [Release Section](https://github.com/humhue/DAOTools/releases), download the original mod from NexusMods, and run the `.dazip` through the patcher. It is fully automated and takes less than a second!
+**Want an international version of the fixpack?** Out of respect for the original author's permissions, I do not host pre-patched mod files. Instead, simply download this program from [Nexus Mods](https://www.nexusmods.com/dragonage/mods/6920), download the original mod from NexusMods, and run the `.dazip` through the patcher. It is fully automated and takes less than a second!
 
 ---
 
@@ -32,7 +32,7 @@ DAOTools has been completely rewritten from the ground up in the **Nim** program
 * *Note: The legacy read-only GFF parser has been dropped, as better dedicated tools exist for viewing raw data.*
 
 ## Installation & Compilation
-If you just want to use the tool, download the compiled executable for your OS from the **Releases** tab. 
+If you just want to use the tool, download the compiled executable from the [Nexus Mods page](https://www.nexusmods.com/dragonage/mods/6920).
 
 If you want to compile the tool yourself from the source code, you will need the [Nim Compiler](https://nim-lang.org/):
 
