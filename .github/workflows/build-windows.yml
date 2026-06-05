@@ -1,0 +1,31 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Nim Setup
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: 'stable'
+
+      - name: Install Dependencies
+        run: nimble install nigui -y
+
+      - name: Compile GUI
+        run: nim c -d:danger --mm:arc --opt:speed --app:gui -o:DAOTools.exe gui.nim
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DAOTools-Windows
+          path: DAOTools.exe
