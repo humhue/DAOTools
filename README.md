@@ -1,10 +1,10 @@
-# DAOTools (v2.0)
+# DAOTools
 
 **QUDAO FIXPACK DISCLAIMER**
 
 I am not the author of the QUDAO Fixpack (originally created by Paul Escalona / Qwinn). I created this toolset and a QUDAO patch to make most of its text non-language-specific, allowing non-English speakers to enjoy the mod.
 
-**Just want to play the game with the fixpack?** You do not need to download this tool. You can download the pre-patched, international version of QUDAO directly from the [Releases Section (Insert Link Here)](#).
+**Just want to play the game with the fixpack?** You do not need to download this tool. You can download the pre-patched, international version of QUDAO directly from the [Releases Section](https://github.com/humhue/DAOTools/releases).
 
 ---
 
