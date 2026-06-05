@@ -2,9 +2,9 @@
 
 **QUDAO FIXPACK DISCLAIMER**
 
-I am not the author of the QUDAO Fixpack (originally created by Paul Escalona / Qwinn). I created this toolset and a QUDAO patch to make most of its text non-language-specific, allowing non-English speakers to enjoy the mod.
+I am not the author of the QUDAO Fixpack (originally created by Paul Escalona / Qwinn). I initially created this toolset specifically to patch QUDAO and make its text non-language-specific, allowing non-English speakers to enjoy the mod.
 
-**Just want to play the game with the fixpack?** You do not need to download this tool. You can download the pre-patched, international version of QUDAO directly from the [Releases Section](https://github.com/humhue/DAOTools/releases).
+**Want an international version of the fixpack?** Out of respect for the original author's permissions, I do not host pre-patched mod files. Instead, simply download this program from the [Release Section](https://github.com/humhue/DAOTools/releases), download the original mod from NexusMods, and run the `.dazip` through the patcher. It is fully automated and takes less than a second!
 
 ---
 

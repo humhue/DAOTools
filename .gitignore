@@ -2,6 +2,8 @@
 *
 
 # Un-block only some directories
+!.github/
+!.github/**
 !src/
 !src/**
 src/gui.app
