@@ -36,17 +36,17 @@ If you just want to use the tool, download the compiled executable from the [Nex
 
 If you want to compile the tool yourself from the source code, you will need the [Nim Compiler](https://nim-lang.org/):
 
-```bash
-# Clone the repository
-git clone [https://github.com/humhue/DAOTools.git](https://github.com/humhue/DAOTools.git)
-cd DAOTools
+Built with Nim 2.2.8 and Zig 0.14.x — using these versions reproduces the latest release build on Nexus Mods.
 
-# Compile the GUI (Windows Example)
-nim c -d:danger --mm:arc --opt:speed --app:gui -o:DAOTools.exe src/gui.nim
+1. Install Nim  → https://nim-lang.org/install.html (choosenim recommended)
+2. Install Zig  → `winget install -e --id zig.zig` / ziglang.org/download / `brew install zig` (on macOS)
+3. `nimble install zigcc`        # zig-cc wrapper used as Nim's C compiler
+4. `nimble install nigui`        # deps (or `nimble install --depsOnly` if using the .nimble file)
+5. `git clone [https://github.com/humhue/DAOTools.git](https://github.com/humhue/DAOTools.git)`
+6. `cd DAOTools`
+7. `nim c -d:zigwin src/gui.nim` # this builds DAOTools.exe
 
-# Compile the GUI (MacOS Example)
-nim c -d:danger --mm:arc --opt:speed --app:"gui" --passC:"-flto -O3" --passL:"-flto -O3 -Wl,-rpath,/opt/homebrew/lib" src/gui.nim
-```
+First build takes longer while zig compiles the mingw CRT for the target; it's cached afterwards.
 
 ## How do I patch a mod? (e.g., QUDAO Fixpack)
 Patching massive mods is now a one-click process.
