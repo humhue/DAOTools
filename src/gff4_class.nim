@@ -58,7 +58,7 @@ proc initGff4File*(erf_file_path: string, file_path: string, tlkDict: TableRef[u
   let platform = cast[ptr array[4, char]](result.baseAddr + 8)[]
   
   if toString(gff_magic) != "GFF " or toString(gff_version) != "V4.0" or toString(platform) != "PC  ":
-    quit("Error: Invalid GFF4 header signature.")
+    raise newException(ValueError, "Invalid GFF4 header signature in " & extractFilename(file_path))
 
   let struct_array_count = cast[ptr uint32](result.baseAddr + 20)[]
   result.data_offset = cast[ptr uint32](result.baseAddr + 24)[]
@@ -81,7 +81,7 @@ proc initGff4FileFromStream*(data: sink string, erf_file_path: string, file_path
   let platform = cast[ptr array[4, char]](result.baseAddr + 8)[]
   
   if toString(gff_magic) != "GFF " or toString(gff_version) != "V4.0" or toString(platform) != "PC  ":
-    quit("Error: Invalid GFF4 header signature.")
+    raise newException(ValueError, "Invalid GFF4 header signature in " & extractFilename(file_path))
 
   let struct_array_count = cast[ptr uint32](result.baseAddr + 20)[]
   result.data_offset = cast[ptr uint32](result.baseAddr + 24)[]

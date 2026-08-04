@@ -11,7 +11,7 @@ proc readTlkString(ctx: GffFileContext, index: uint32, trace: string) =
   if ref_val == 0 or ref_val == 0xFFFFFFFF'u32: return
   # we make sure the reference is a regular one
 
-  if tlkstring_index >= 610000000'u32:
+  if tlkstring_index >= CustomStringRefBase:
     let tlkstring_offset = ref_ptr[] + ctx.data_offset
     let length = cast[ptr uint32](ctx.base_addr + tlkstring_offset.int)[]
     
@@ -71,7 +71,7 @@ proc findTlkStrings*(self: Dummy, ctx: GffFileContext, index: uint32) =
         mstruct.findTlkStrings(ctx, current_offset, self)
         current_offset += mstruct.size
     elif self.is_reference:
-      quit("Error: A struct shouldn't be a reference.")
+      raise newException(ValueError, "A struct shouldn't be a reference.")
     else:
       mstruct.findTlkStrings(ctx, real_index, self)
   else:
@@ -85,7 +85,7 @@ proc findTlkStrings*(self: Dummy, ctx: GffFileContext, index: uint32) =
           readTlkString(ctx, current_offset, trace)
           current_offset += 8
       elif self.is_reference:
-        quit("Error: A tlkstring shouldn't be a reference.")
+        raise newException(ValueError, "A tlkstring shouldn't be a reference.")
       else:
         readTlkString(ctx, real_index, trace)
         
@@ -105,6 +105,6 @@ proc findTlkStrings*(self: Dummy, ctx: GffFileContext, index: uint32) =
           generic_dummy.parent = self
           generic_dummy.findTlkStrings(ctx, ctx.data_offset)
       else:
-        quit("Error: A generic must be either a list or a reference.")
+        raise newException(ValueError, "A generic must be either a list or a reference.")
     else:
-      quit("Error: Wrong type-id encountered.")
+      raise newException(ValueError, "Wrong type-id encountered: " & $self.type_id)

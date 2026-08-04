@@ -26,7 +26,8 @@ template writeUint32(self: Gff3File, offset: uint32, val: uint32) =
 proc readHeader(self: Gff3File) =
   var fileVer = newString(4)
   copyMem(addr fileVer[0], cast[pointer](self.baseAddr + 4), 4)
-  doAssert fileVer == "V3.2", "Unsupported Version: " & fileVer
+  if fileVer != "V3.2":
+    raise newException(ValueError, "Unsupported GFF3 version in " & self.filename & ": " & fileVer)
 
   var offset: uint32 = 8
   self.struct_offset = self.readUint32(offset); offset += 4
@@ -117,7 +118,7 @@ proc processField(self: Gff3File, field_index: uint32, current_path: var seq[str
     let loc_start = self.field_data_offset + data_or_offset
     let string_ref = self.readUint32(loc_start + 4)
     
-    if string_ref >= 610000000'u32 and string_ref != 0xFFFFFFFF'u32:
+    if string_ref >= CustomStringRefBase and string_ref != 0xFFFFFFFF'u32:
       let string_count = self.readUint32(loc_start + 8)
       var extractedStr = ""
       

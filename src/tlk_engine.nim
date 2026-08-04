@@ -73,7 +73,7 @@ proc genTlkFile*(mapfilePath: string, tlkfilePath: string): bool =
     return false
 
   var strm = newFileStream(tlkfilePath, fmWrite)
-  if strm == nil: quit("Error: Could not open output file.")
+  if strm == nil: raise newException(IOError, "Could not open output file: " & tlkfilePath)
 
   # --- CALCULATE OFFSETS ---
   let headerSize = 28'u32

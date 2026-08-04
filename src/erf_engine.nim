@@ -26,7 +26,7 @@ proc extractErf*(filePath, dirPath: string) =
   createDir(dirPath)
 
   var strm = newFileStream(filePath, fmRead)
-  if strm == nil: quit("Could not open ERF for reading: " & filePath)
+  if strm == nil: raise newException(IOError, "Could not open ERF for reading: " & filePath)
 
   discard strm.readStr(16) # Skip "ERF V2.0" magic
   let fileCount = strm.readUint32()
@@ -64,7 +64,7 @@ proc buildErf*(dirPath, filePath: string) =
   let deltaDays = (nowTime - janFirst).inDays().uint32
 
   var strm = newFileStream(filePath, fmWrite)
-  if strm == nil: quit("Could not create ERF: " & filePath)
+  if strm == nil: raise newException(IOError, "Could not create ERF: " & filePath)
 
   strm.writeUtf16("ERF V2.0", 16)
   strm.write(fileCount)

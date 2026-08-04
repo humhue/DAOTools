@@ -64,7 +64,8 @@ proc getNodePath*(dummy: Dummy, struct_array: seq[GffStruct]): string =
     # otherwise we just append the label of the current dummy
     if dummy.parent != nil and dummy.parent.type_id == 0xFFFF:
       val = getName(dummy.parent.label) & ":generic"
-      if getName(dummy.label) != "INVALIDENTRY": quit("Error: Current dummy can't have a label.")
+      if getName(dummy.label) != "INVALIDENTRY":
+        raise newException(ValueError, "Current dummy can't have a label.")
     else:
       val = getName(dummy.label)
     
