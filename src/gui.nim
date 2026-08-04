@@ -41,7 +41,7 @@ btnFile.onClick = proc(event: ClickEvent) =
 
 btnFolder.onClick = proc(event: ClickEvent) =
   var dialog = SelectDirectoryDialog() # Using the GTK directory picker we just fixed!
-  dialog.title = "Select ERF Source Folder"
+  dialog.title = "Select Folder (patch contents or build ERF)"
   dialog.run()
   if dialog.selectedDirectory != "":
     targetPath = dialog.selectedDirectory
@@ -57,7 +57,7 @@ var actContainer = newLayoutContainer(Layout_Horizontal)
 actContainer.widthMode = WidthMode_Fill
 container.add(actContainer)
 
-var btnPatch = newButton("Patch DAZIP / GFF")
+var btnPatch = newButton("Patch DAZIP / GFF / Folder")
 var btnExtract = newButton("Extract ERF")
 var btnBuild = newButton("Build ERF")
 
@@ -82,26 +82,41 @@ container.add(consoleArea)
 
 # ACTION 1: Patching
 btnPatch.onClick = proc(event: ClickEvent) =
-  if targetPath == "" or isDir:
-    window.alert("Please 'Select File...' (DAZIP, ERF, or GFF) to patch.")
+  if targetPath == "":
+    window.alert("Please 'Select File...' (DAZIP, ERF, or GFF) or 'Select Folder...' to patch.")
     return
   consoleArea.addLine("\n▶ Patching: " & extractFilename(targetPath))
   app.queueMain(proc() = app.processEvents())
-  
+
   let keepAudio = chkKeepAudio.checked
-  let output = targetPath.splitFile().dir / (targetPath.splitFile().name & ".patched" & targetPath.splitFile().ext)
-  
+
   # Define the pause-and-edit callback
   let onTlkEdit = proc(mapPath: string) =
     openDefaultBrowser(mapPath) # Cross-platform open in Notepad/TextEdit
-    
+
     # This acts as your yield/pause. The backend stops until they click OK.
     window.alert("The program found TLK strings that require manual (language-specific) translation.\n\nThe TLK dictionary has been opened in your default text editor.\n\nYou may now translate these strings, save the file, and then click OK to resume patching.\n\nTo skip this step, click OK to continue. Please note that these lines will remain in their original language.")
 
   try:
-    # Pass the callback into your patching engine
-    patchFile(targetPath, output, keepAudio, onTlkEdit)
-    consoleArea.addLine("✔ Complete! -> " & extractFilename(output))
+    if isDir:
+      # Report each file as it lands so a big folder doesn't look frozen
+      let onFile = proc(path: string, err: string) =
+        if err == "":
+          consoleArea.addLine("  ✔ " & extractFilename(path))
+        else:
+          consoleArea.addLine("  ❌ " & extractFilename(path) & ": " & err)
+        app.queueMain(proc() = app.processEvents())
+
+      let (patched, failed, skipped) = patchFolder(targetPath, keepAudio, onTlkEdit, onFile)
+      if patched == 0 and failed == 0:
+        consoleArea.addLine("✔ Nothing to patch (" & $skipped & " incompatible files skipped).")
+      else:
+        consoleArea.addLine("✔ Complete! " & $patched & " patched, " & $failed &
+                            " failed, " & $skipped & " skipped.")
+    else:
+      let output = patchedPath(targetPath)
+      patchFile(targetPath, output, keepAudio, onTlkEdit)
+      consoleArea.addLine("✔ Complete! -> " & extractFilename(output))
   except Exception as e:
     consoleArea.addLine("❌ Error: " & e.msg)
 

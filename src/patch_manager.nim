@@ -17,6 +17,9 @@ const
   ExtGff3 = [".are", ".lst", ".utc", ".uti", ".utm", ".utp", ".utt"]
   ExtGff4 = [".cub", ".cut", ".dlb", ".dlg", ".plo", ".stg", ".tlk"]
   AudioExts = [".fsb", ".fev"]
+  # Everything patchFile knows how to route. Used to filter folder scans so we
+  # never hand it an extension it would quit on.
+  PatchableExts = @ExtGff3 & @ExtGff4 & @[".erf", ".dazip"]
 
 proc patchGff3(erfPath, absPath: string, tlkDict: TableRef[uint32, TlkEntry]) =
   let f = initGff3File(erfPath, absPath, tlkDict)
@@ -160,6 +163,38 @@ proc patchFile*(inputPath, outputPath: string, keepAudio = false, onTlkEdit: pro
   else:
     quit("Error: Unknown game file extension: " & ext)
 
+proc patchedPath*(inputPath: string): string =
+  ## <name>.patched.<ext>, alongside the original.
+  let (dir, name, ext) = inputPath.splitFile()
+  return dir / (name & ".patched" & ext)
+
+proc patchFolder*(dirPath: string, keepAudio = false,
+                  onTlkEdit: proc(mapPath: string) = nil,
+                  onFile: proc(path: string, err: string) = nil):
+                  tuple[patched, failed, skipped: int] =
+  ## Patches every compatible file under dirPath, recursively, writing each
+  ## result next to its original. onFile reports progress: err == "" on success.
+  var targets: seq[string]
+  for path in walkDirRec(dirPath):
+    let (_, name, ext) = path.splitFile()
+    # Skip our own output so re-running a folder doesn't patch the patches
+    if ext.toLowerAscii() in PatchableExts and not name.toLowerAscii().endsWith(".patched"):
+      targets.add(path)
+    else:
+      result.skipped += 1
+
+  # Collect first, then patch: we are writing new files into the tree we walked
+  targets.sort()
+
+  for path in targets:
+    try:
+      patchFile(path, patchedPath(path), keepAudio, onTlkEdit)
+      result.patched += 1
+      if onFile != nil: onFile(path, "")
+    except Exception as e:
+      result.failed += 1
+      if onFile != nil: onFile(path, e.msg)
+
 when isMainModule:
   # loadIdsAndNames() # Initialize global ID/Name dictionaries before parsing
 
@@ -169,5 +204,4 @@ when isMainModule:
   let filePath = paramStr(1)
   if not fileExists(filePath): quit("Error: File not found.")
   
-  let output = filePath.splitFile().dir / (filePath.splitFile().name & ".patched" & filePath.splitFile().ext)
-  patchFile(filePath, output)
+  patchFile(filePath, patchedPath(filePath))
