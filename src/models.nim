@@ -1,6 +1,13 @@
 # models.nim
 include mem_wrapper
 
+const
+  # Stringrefs below this are BioWare's own: the game resolves them from its
+  # shipped talk table, so blanking them is the whole point of the tool.
+  # At or above it the string is mod-authored and exists nowhere else, so it
+  # must be written back out to a .tlk before we zero the reference.
+  CustomStringRefBase* = 610000000'u32
+
 type
   TlkEntry* = object
     line*: string

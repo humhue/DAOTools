@@ -107,12 +107,15 @@ btnPatch.onClick = proc(event: ClickEvent) =
           consoleArea.addLine("  ❌ " & extractFilename(path) & ": " & err)
         app.queueMain(proc() = app.processEvents())
 
-      let (patched, failed, skipped) = patchFolder(targetPath, keepAudio, onTlkEdit, onFile)
-      if patched == 0 and failed == 0:
-        consoleArea.addLine("✔ Nothing to patch (" & $skipped & " incompatible files skipped).")
+      let res = patchFolder(targetPath, keepAudio, onTlkEdit, onFile)
+      if res.patched == 0 and res.failed == 0:
+        consoleArea.addLine("✔ Nothing to patch (" & $res.skipped & " incompatible files skipped).")
       else:
-        consoleArea.addLine("✔ Complete! " & $patched & " patched, " & $failed &
-                            " failed, " & $skipped & " skipped.")
+        consoleArea.addLine("✔ Complete! " & $res.patched & " patched, " & $res.failed &
+                            " failed, " & $res.skipped & " skipped -> " &
+                            extractFilename(res.outDir))
+      if res.tlkPath != "":
+        consoleArea.addLine("  ↳ translatable strings written to " & extractFilename(res.tlkPath))
     else:
       let output = patchedPath(targetPath)
       patchFile(targetPath, output, keepAudio, onTlkEdit)

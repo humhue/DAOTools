@@ -90,6 +90,37 @@ proc patchErfStream(erfPath: string, erfData: sink string, tlkDict: TableRef[uin
   patchErfContentsStream(erfPath, erfFiles, tlkDict)
   return buildErfStream(erfFiles)
 
+proc tlkBaseName*(path: string): string =
+  ## Full filename including its extension, so foo.dlg and foo.cut don't fight
+  ## over one .tlk. Spaces become underscores like the DAZIP path already does.
+  path.extractFilename().replace(" ", "_")
+
+proc emitTlk*(tlkDict: TableRef[uint32, TlkEntry], destDir, baseName: string,
+              onTlkEdit: proc(mapPath: string) = nil): string =
+  ## Writes the harvested strings out as <baseName>.tlk in destDir and returns
+  ## its path ("" if there was nothing to write).
+  ##
+  ## Never skip this when the dict is non-empty. By the time we get here the
+  ## parser has already zeroed the string references inside the patched file,
+  ## so this .tlk is the only surviving copy of those lines.
+  if tlkDict.len == 0: return ""
+
+  let mapPath = destDir / "TEMP_full_tlk.json"
+  let tlkPath = destDir / (baseName & ".tlk")
+
+  if not genMapfile(mapPath, tlkDict): return ""
+
+  # Hand control to the GUI: it opens the JSON in the user's editor and then
+  # blocks on a modal. The backend FREEZES right here until they click "OK".
+  # genTlkFile must not run before this returns, or we compile the untranslated
+  # JSON and throw the user's translation away.
+  if onTlkEdit != nil:
+    onTlkEdit(mapPath)
+
+  let generated = genTlkFile(mapPath, tlkPath)
+  if fileExists(mapPath): removeFile(mapPath)
+  return if generated: tlkPath else: ""
+
 # Add the callback parameter to the definition
 proc patchDazip*(zipPath, newZipPath: string, keepAudio: bool, tlkDict: TableRef[uint32, TlkEntry], onTlkEdit: proc(mapPath: string) = nil) =
   let reader = openZipArchive(zipPath)
@@ -110,31 +141,15 @@ proc patchDazip*(zipPath, newZipPath: string, keepAudio: bool, tlkDict: TableRef
       writer.addEntry(path, fileData)   
       
   if tlkDict.len > 0:
-    # Build absolute paths next to the target DAZIP
+    # Built next to the target DAZIP, then folded into the archive itself
     let workDir = zipPath.splitFile().dir
-    let mapPath = workDir / "TEMP_full_tlk.json"
-    let tlkPath = workDir / "TEMP_test.tlk"
-    
-    # Check if mapfile generated successfully
-    if genMapfile(mapPath, tlkDict):
-      
-      # If the GUI passed us a callback, execute it!
-      # This hands control back to the GUI, which pops the window.alert.
-      # The backend will FREEZE right here until the user clicks "OK".
-      if onTlkEdit != nil:
-        onTlkEdit(mapPath)
-      
-      # The user clicked OK! Resume standard operations:
-      discard genTlkFile(mapPath, tlkPath)
-      
-      let baseName = zipPath.splitFile().name.replace(" ", "_")
-      let overridePath = "Contents/packages/core/override/" & baseName & ".tlk"
-      
-      writer.addEntry(overridePath, readFile(tlkPath))
-      
-    # Clean up the SSD
-    if fileExists(mapPath): removeFile(mapPath)
-    if fileExists(tlkPath): removeFile(tlkPath)
+    let baseName = zipPath.splitFile().name.replace(" ", "_")
+    let tlkPath = emitTlk(tlkDict, workDir, baseName, onTlkEdit)
+
+    if tlkPath != "":
+      writer.addEntry("Contents/packages/core/override/" & baseName & ".tlk", readFile(tlkPath))
+      # The archive owns it now; don't leave a loose copy on the SSD
+      removeFile(tlkPath)
 
   writer.close()
 
@@ -142,26 +157,40 @@ proc patchDazip*(zipPath, newZipPath: string, keepAudio: bool, tlkDict: TableRef
 # MAIN ROUTER
 # =====================================================================
 
-proc patchFile*(inputPath, outputPath: string, keepAudio = false, onTlkEdit: proc(mapPath: string) = nil) =
+proc patchFile*(inputPath, outputPath: string, keepAudio = false,
+                onTlkEdit: proc(mapPath: string) = nil,
+                sharedTlkDict: TableRef[uint32, TlkEntry] = nil) =
+  ## sharedTlkDict lets a caller (patchFolder) accumulate strings across many
+  ## files and emit one .tlk at the end. When it is nil we own the dict, and we
+  ## are the ones responsible for writing the .tlk out.
   let ext = inputPath.splitFile().ext.toLowerAscii()
-  let tlkDict = newTable[uint32, TlkEntry]() # Central dict for this patching run
-  
+  let ownsDict = sharedTlkDict == nil
+  let tlkDict = if ownsDict: newTable[uint32, TlkEntry]() else: sharedTlkDict
+
   if ext in ExtGff3:
     copyFile(inputPath, outputPath)
     patchGff3("None", outputPath, tlkDict)
-    
+
   elif ext in ExtGff4:
     copyFile(inputPath, outputPath)
     patchGff4("None", outputPath, tlkDict)
-    
+
   elif ext == ".erf":
     patchErf(inputPath, outputPath, tlkDict)
-    
+
   elif ext == ".dazip":
-    patchDazip(inputPath, outputPath, keepAudio, tlkDict, onTlkEdit)
-    
+    # A DAZIP is self-contained: it always gets its own dict and embeds its own
+    # .tlk, even when it turns up inside a folder run.
+    patchDazip(inputPath, outputPath, keepAudio, newTable[uint32, TlkEntry](), onTlkEdit)
+    return
+
   else:
-    quit("Error: Unknown game file extension: " & ext)
+    raise newException(ValueError, "Unknown game file extension: " & ext)
+
+  # Whatever we harvested has just been zeroed inside the patched file. If we
+  # own the dict, this is the last chance to write those strings back out.
+  if ownsDict:
+    discard emitTlk(tlkDict, outputPath.splitFile().dir, tlkBaseName(inputPath), onTlkEdit)
 
 proc patchedPath*(inputPath: string): string =
   ## <name>.patched.<ext>, alongside the original.
@@ -171,14 +200,27 @@ proc patchedPath*(inputPath: string): string =
 proc patchFolder*(dirPath: string, keepAudio = false,
                   onTlkEdit: proc(mapPath: string) = nil,
                   onFile: proc(path: string, err: string) = nil):
-                  tuple[patched, failed, skipped: int] =
-  ## Patches every compatible file under dirPath, recursively, writing each
-  ## result next to its original. onFile reports progress: err == "" on success.
+                  tuple[outDir, tlkPath: string, patched, failed, skipped: int] =
+  ## Copies dirPath to a sibling "Patched - <name>" and patches the files inside
+  ## that copy in place, keeping their original filenames. The source folder is
+  ## never modified. onFile reports progress: err == "" on success.
+  let name = dirPath.lastPathPart()          # ignores a trailing separator
+  let parent = dirPath.parentDir()
+
+  # Never write into or delete an existing folder: a previous run may hold
+  # translations the user typed by hand.
+  var dest = parent / ("Patched - " & name)
+  var attempt = 2
+  while dirExists(dest) or fileExists(dest):
+    dest = parent / ("Patched - " & name & " (" & $attempt & ")")
+    attempt += 1
+
+  copyDir(dirPath, dest)
+  result.outDir = dest
+
   var targets: seq[string]
-  for path in walkDirRec(dirPath):
-    let (_, name, ext) = path.splitFile()
-    # Skip our own output so re-running a folder doesn't patch the patches
-    if ext.toLowerAscii() in PatchableExts and not name.toLowerAscii().endsWith(".patched"):
+  for path in walkDirRec(dest):
+    if path.splitFile().ext.toLowerAscii() in PatchableExts:
       targets.add(path)
     else:
       result.skipped += 1
@@ -186,14 +228,28 @@ proc patchFolder*(dirPath: string, keepAudio = false,
   # Collect first, then patch: we are writing new files into the tree we walked
   targets.sort()
 
+  # One dict for the whole tree, so the folder gets a single combined .tlk
+  let tlkDict = newTable[uint32, TlkEntry]()
+
   for path in targets:
+    # patchFile can't read and write the same path, so patch to a sibling temp
+    # and swap it in
+    let tmp = path & ".daotmp"
     try:
-      patchFile(path, patchedPath(path), keepAudio, onTlkEdit)
+      patchFile(path, tmp, keepAudio, onTlkEdit, tlkDict)
+      removeFile(path)
+      moveFile(tmp, path)
       result.patched += 1
       if onFile != nil: onFile(path, "")
     except Exception as e:
+      # Leave the untouched copy in place so the output folder stays complete
+      if fileExists(tmp): removeFile(tmp)
       result.failed += 1
-      if onFile != nil: onFile(path, e.msg)
+      # Engines report the file they were handed, which is the temp copy
+      if onFile != nil: onFile(path, e.msg.replace(".daotmp", ""))
+
+  # Must come after the loop: the dict isn't complete until every file is done
+  result.tlkPath = emitTlk(tlkDict, dest, name.replace(" ", "_"), onTlkEdit)
 
 when isMainModule:
   # loadIdsAndNames() # Initialize global ID/Name dictionaries before parsing
@@ -203,5 +259,9 @@ when isMainModule:
   
   let filePath = paramStr(1)
   if not fileExists(filePath): quit("Error: File not found.")
-  
-  patchFile(filePath, patchedPath(filePath))
+
+  # The engines raise on malformed input now; keep the CLI's output clean
+  try:
+    patchFile(filePath, patchedPath(filePath))
+  except CatchableError as e:
+    quit("Error: " & e.msg)
