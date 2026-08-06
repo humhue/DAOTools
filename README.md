@@ -42,7 +42,7 @@ Built with Nim 2.2.8 and Zig 0.14.x — using these versions reproduces the late
 2. Install Zig  → `winget install -e --id zig.zig` / ziglang.org/download / `brew install zig` (on macOS)
 3. `nimble install zigcc`        # zig-cc wrapper used as Nim's C compiler
 4. `nimble install nigui`        # deps (or `nimble install --depsOnly` if using the .nimble file)
-5. `git clone [https://github.com/humhue/DAOTools.git](https://github.com/humhue/DAOTools.git)`
+5. `git clone https://github.com/humhue/DAOTools.git`
 6. `cd DAOTools`
 7. `nim c -d:zigwin src/gui.nim` # this builds DAOTools.exe
 
