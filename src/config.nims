@@ -8,8 +8,12 @@ when defined(zigwin):
   switch("os", "windows")
   switch("cpu", "amd64")
   switch("cc", "clang")
-  switch("clang.exe", "zigcc")
-  switch("clang.linkerexe", "zigcc")
+  when hostOS == "windows":
+    switch("clang.exe", "zigcc.cmd")
+    switch("clang.linkerexe", "zigcc.cmd")
+  else:
+    switch("clang.exe", "zigcc")
+    switch("clang.linkerexe", "zigcc")
   switch("clang.options.linker", "")
   switch("define", "danger")
   switch("mm", "arc")
