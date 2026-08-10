@@ -24,7 +24,9 @@ jobs:
           version: 0.14.1
 
       - name: Install Dependencies
-        run: nimble install zigcc nigui -y
+        run: |
+          nimble install zigcc nigui -y
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:USERPROFILE\.nimble\bin"
 
       - name: Compile GUI
         run: nim c -d:zigwin src/gui.nim
