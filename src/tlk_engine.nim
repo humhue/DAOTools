@@ -51,20 +51,6 @@ proc writeU32(strm: Stream, val: uint32) = strm.write(val)
 proc writeU16(strm: Stream, val: uint16) = strm.write(val)
 proc writeChars(strm: Stream, val: string) = strm.write(val)
 
-# ECStrings are counted and stored in UTF-16 code units, not code points, so
-# anything outside the BMP has to become a surrogate pair here. Doing the
-# conversion once also guarantees the offset pass and the payload pass agree.
-proc toUtf16Units(s: string): seq[uint16] =
-  result = newSeqOfCap[uint16](s.len)
-  for r in s.runes:
-    let cp = r.int.uint32
-    if cp <= 0xFFFF'u32:
-      result.add(cp.uint16)
-    else:
-      let v = cp - 0x10000'u32
-      result.add((0xD800'u32 + (v shr 10)).uint16)
-      result.add((0xDC00'u32 + (v and 0x3FF'u32)).uint16)
-
 proc genTlkFile*(mapfilePath: string, tlkfilePath: string): bool =
   let entries = decodeTlkstringsJson(mapfilePath)
   let n_entries = entries.len.uint32

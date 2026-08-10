@@ -32,6 +32,14 @@ proc getStreamData*(mb: MemBuffer): string =
   doAssert mb.kind == msString, "Cannot extract string from a file-backed buffer"
   return mb.sData
 
+proc takeStreamData*(mb: var MemBuffer): string =
+  ## Transfer the owned stream string to the rewriter. Traversal must already
+  ## be finished because this deliberately invalidates mem/baseAddr.
+  doAssert mb.kind == msString, "Cannot take a string from a file-backed buffer"
+  result = move(mb.sData)
+  mb.mem = nil
+  mb.size = 0
+
 # 4. Safe close
 proc close*(mb: var MemBuffer) =
   if mb.kind == msFile:

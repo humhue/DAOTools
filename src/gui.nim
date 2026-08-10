@@ -6,7 +6,7 @@ app.init()
 
 var window = newWindow("DAO Tools")
 window.width = 600
-window.height = 420
+window.height = 470
 
 var container = newLayoutContainer(Layout_Vertical)
 container.padding = 15
@@ -32,7 +32,7 @@ var isDir = false
 
 btnFile.onClick = proc(event: ClickEvent) =
   var dialog = newOpenFileDialog()
-  dialog.title = "Select DAZIP or ERF"
+  dialog.title = "Select DAZIP, ERF, TLK, or GFF"
   dialog.run()
   if dialog.files.len > 0:
     targetPath = dialog.files[0]
@@ -52,12 +52,38 @@ btnFolder.onClick = proc(event: ClickEvent) =
 var chkKeepAudio = newCheckbox("Keep Audio (.fsb, .fev) [DAZIP only]")
 container.add(chkKeepAudio)
 
+var jsonContainer = newLayoutContainer(Layout_Horizontal)
+jsonContainer.widthMode = WidthMode_Fill
+container.add(jsonContainer)
+
+var btnJson = newButton("Select Master JSON...")
+var btnClearJson = newButton("Clear JSON")
+var lblJson = newLabel("Interactive translation (no master selected)")
+lblJson.widthMode = WidthMode_Fill
+jsonContainer.add(btnJson)
+jsonContainer.add(btnClearJson)
+jsonContainer.add(lblJson)
+
+var masterJsonPath = ""
+
+btnJson.onClick = proc(event: ClickEvent) =
+  var dialog = newOpenFileDialog()
+  dialog.title = "Select Translation JSON"
+  dialog.run()
+  if dialog.files.len > 0:
+    masterJsonPath = dialog.files[0]
+    lblJson.text = "JSON: " & extractFilename(masterJsonPath)
+
+btnClearJson.onClick = proc(event: ClickEvent) =
+  masterJsonPath = ""
+  lblJson.text = "Interactive translation (no master selected)"
+
 # --- 3. Action Buttons Row ---
 var actContainer = newLayoutContainer(Layout_Horizontal)
 actContainer.widthMode = WidthMode_Fill
 container.add(actContainer)
 
-var btnPatch = newButton("Patch DAZIP / GFF / Folder")
+var btnPatch = newButton("Patch DAZIP / ERF / TLK / GFF / Folder")
 var btnExtract = newButton("Extract ERF")
 var btnBuild = newButton("Build ERF")
 
@@ -83,19 +109,20 @@ container.add(consoleArea)
 # ACTION 1: Patching
 btnPatch.onClick = proc(event: ClickEvent) =
   if targetPath == "":
-    window.alert("Please 'Select File...' (DAZIP, ERF, or GFF) or 'Select Folder...' to patch.")
+    window.alert("Please 'Select File...' (DAZIP, ERF, TLK, or GFF) or 'Select Folder...' to patch.")
     return
   consoleArea.addLine("\n▶ Patching: " & extractFilename(targetPath))
   app.queueMain(proc() = app.processEvents())
 
   let keepAudio = chkKeepAudio.checked
 
-  # Define the pause-and-edit callback
-  let onTlkEdit = proc(mapPath: string) =
+  # Define the pause-and-edit callback used only when no master JSON is selected.
+  let onTranslationEdit = proc(mapPath: string) =
     openDefaultBrowser(mapPath) # Cross-platform open in Notepad/TextEdit
 
-    # This acts as your yield/pause. The backend stops until they click OK.
-    window.alert("The program found TLK strings that require manual (language-specific) translation.\n\nThe TLK dictionary has been opened in your default text editor.\n\nYou may now translate these strings, save the file, and then click OK to resume patching.\n\nTo skip this step, click OK to continue. Please note that these lines will remain in their original language.")
+    # The discovery pass has not mutated any game resource. The patch pass
+    # starts only after the edited JSON is saved and the user clicks OK.
+    window.alert("The program found mod-authored strings that can be translated.\n\nThe translation JSON has been opened in your default text editor.\n\nEdit the 'line' values, save the file, and click OK to build the patched resources.\n\nTo skip this step, click OK without changing the JSON; the lines will remain in their original language.\n\nThe JSON is kept beside the selected input and can be reused later as a master translation file.")
 
   try:
     if isDir:
@@ -107,19 +134,22 @@ btnPatch.onClick = proc(event: ClickEvent) =
           consoleArea.addLine("  ❌ " & extractFilename(path) & ": " & err)
         app.queueMain(proc() = app.processEvents())
 
-      let res = patchFolder(targetPath, keepAudio, onTlkEdit, onFile)
+      let res = patchFolder(targetPath, keepAudio, onTranslationEdit, onFile,
+                            masterJsonPath)
       if res.patched == 0 and res.failed == 0:
         consoleArea.addLine("✔ Nothing to patch (" & $res.skipped & " incompatible files skipped).")
       else:
         consoleArea.addLine("✔ Complete! " & $res.patched & " patched, " & $res.failed &
                             " failed, " & $res.skipped & " skipped -> " &
                             extractFilename(res.outDir))
-      if res.tlkPath != "":
-        consoleArea.addLine("  ↳ translatable strings written to " & extractFilename(res.tlkPath))
+      if res.translationPath != "":
+        consoleArea.addLine("  ↳ reusable translations: " & extractFilename(res.translationPath))
     else:
-      let output = patchedPath(targetPath)
-      patchFile(targetPath, output, keepAudio, onTlkEdit)
-      consoleArea.addLine("✔ Complete! -> " & extractFilename(output))
+      let res = patchSelectedFile(targetPath, keepAudio,
+                                  onTranslationEdit, masterJsonPath)
+      consoleArea.addLine("✔ Complete! -> " & res.outputPath)
+      if res.translationPath != "":
+        consoleArea.addLine("  ↳ reusable translations: " & extractFilename(res.translationPath))
   except Exception as e:
     consoleArea.addLine("❌ Error: " & e.msg)
 

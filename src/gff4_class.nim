@@ -45,11 +45,15 @@ proc genGffStruct*(self: GffFile, index: uint32): GffStruct =
   self.struct_array[index] = gffstruct
   return gffstruct
 
-proc initGff4File*(erf_file_path: string, file_path: string, tlkDict: TableRef[uint32, TlkEntry]): GffFile =
+proc initGff4File*(erf_file_path: string, file_path: string,
+                   discovered: DiscoveryIndex = nil,
+                   translations: TranslationIndex = nil): GffFile =
   new(result)
   result.erf_file_path = erf_file_path
   result.file_path = file_path
-  result.tlkDict = tlkDict
+  result.resource_key = makeResourceKey(erf_file_path, file_path)
+  result.discovered = discovered
+  result.translations = translations
   result.mm = openMemFile(file_path)
   result.baseAddr = cast[int](result.mm.mem)
 
@@ -68,11 +72,15 @@ proc initGff4File*(erf_file_path: string, file_path: string, tlkDict: TableRef[u
   for index in 0'u32 ..< struct_array_count:
     discard result.genGffStruct(index)
 
-proc initGff4FileFromStream*(data: sink string, erf_file_path: string, file_path: string, tlkDict: TableRef[uint32, TlkEntry]): GffFile =
+proc initGff4FileFromStream*(data: sink string, erf_file_path: string, file_path: string,
+                             discovered: DiscoveryIndex = nil,
+                             translations: TranslationIndex = nil): GffFile =
   new(result)
   result.erf_file_path = erf_file_path
   result.file_path = file_path
-  result.tlkDict = tlkDict
+  result.resource_key = makeResourceKey(erf_file_path, file_path)
+  result.discovered = discovered
+  result.translations = translations
   result.mm = openMemStream(data)
   result.baseAddr = cast[int](result.mm.mem)
 
@@ -98,11 +106,44 @@ proc findTlkStrings*(self: GffFile) =
       data_offset: self.data_offset, 
       erf_filename: extractFilename(self.erf_file_path), # Used Python's os.path.basename equivalent
       filename: extractFilename(self.file_path), 
+      resource_key: self.resource_key,
       base_addr: self.base_addr, 
       struct_array: self.struct_array,
-      tlkDict: self.tlkDict
+      discovered: self.discovered,
+      translations: self.translations
     )
     self.struct_array[0].findTlkStrings(ctx, ctx.data_offset, nil)
+    self.string_sites = ctx.string_sites
+
+proc rewriteTranslations*(self: GffFile, translations: TranslationIndex): string =
+  ## GFF4 references are relative to the raw data block and the format has no
+  ## data-size field, so new ECStrings can be appended at EOF. Build the output
+  ## only after traversal so MemBuffer.mem/base_addr never become stale.
+  if self.mm.kind != msString:
+    raise newException(ValueError, "GFF4 rewriting requires an owned stream buffer")
+
+  # Take the original allocation instead of keeping it alive while constructing
+  # another full-size copy. Appends may now reallocate safely: traversal is over
+  # and no mmap/baseAddr pointer is read again.
+  result = self.mm.takeStreamData()
+
+  for site in self.string_sites:
+    let translated = translations.findTranslation(self.resource_key, site.string_ref)
+    if translated.found:
+      if translated.line == site.embedded_line:
+        continue
+      let absoluteOffset = result.len
+      if absoluteOffset < self.data_offset.int:
+        raise newException(ValueError, "Invalid GFF4 data offset in " & extractFilename(self.file_path))
+      # translated.line stays owned by the reusable TranslationIndex. The
+      # encoder borrows it and writes straight into the resource buffer.
+      result.appendEcString(translated.line)
+      result.writeU32At(
+        site.ref_offset.int,
+        (absoluteOffset - self.data_offset.int).uint32)
+    elif site.string_ref < CustomStringRefBase:
+      # Core IDs resolve through the installed language's shipped talk table.
+      result.writeU32At(site.ref_offset.int, 0'u32)
 
 proc close*(self: GffFile) =
   self.mm.close()

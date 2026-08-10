@@ -85,3 +85,72 @@ proc getNodePath*(dummy: Dummy, struct_array: seq[GffStruct]): string =
 proc toString*(arr: array[4, char]): string =
   result = newString(4)
   for i in 0..3: result[i] = arr[i]
+
+proc writeU32At*(data: var string, offset: int, value: uint32) =
+  if offset < 0 or offset + 4 > data.len:
+    raise newException(ValueError, "32-bit write is outside the resource buffer")
+  data[offset] = char(value and 0xFF'u32)
+  data[offset + 1] = char((value shr 8) and 0xFF'u32)
+  data[offset + 2] = char((value shr 16) and 0xFF'u32)
+  data[offset + 3] = char((value shr 24) and 0xFF'u32)
+
+proc appendU32*(data: var string, value: uint32) =
+  data.add(char(value and 0xFF'u32))
+  data.add(char((value shr 8) and 0xFF'u32))
+  data.add(char((value shr 16) and 0xFF'u32))
+  data.add(char((value shr 24) and 0xFF'u32))
+
+proc appendU16*(data: var string, value: uint16) =
+  data.add(char(value and 0xFF'u16))
+  data.add(char((value shr 8) and 0xFF'u16))
+
+proc toUtf16Units*(s: string): seq[uint16] =
+  ## ECStrings count and store UTF-16 code units, not Unicode code points.
+  result = newSeqOfCap[uint16](s.len)
+  for r in s.runes:
+    let cp = r.int.uint32
+    if cp <= 0xFFFF'u32:
+      result.add(cp.uint16)
+    else:
+      let value = cp - 0x10000'u32
+      result.add((0xD800'u32 + (value shr 10)).uint16)
+      result.add((0xDC00'u32 + (value and 0x3FF'u32)).uint16)
+
+proc fromUtf16Units*(units: openArray[uint16]): string =
+  var i = 0
+  while i < units.len:
+    let first = units[i]
+    if first >= 0xD800'u16 and first <= 0xDBFF'u16 and i + 1 < units.len:
+      let second = units[i + 1]
+      if second >= 0xDC00'u16 and second <= 0xDFFF'u16:
+        let cp = 0x10000'u32 +
+          ((first.uint32 - 0xD800'u32) shl 10) +
+          (second.uint32 - 0xDC00'u32)
+        result.add($Rune(cp))
+        i += 2
+        continue
+    result.add($Rune(first))
+    i += 1
+
+proc utf16UnitCount(s: string): int =
+  for r in s.runes:
+    if r.int.uint32 <= 0xFFFF'u32: result += 1
+    else: result += 2
+
+proc appendEcString*(data: var string, line: string) =
+  ## Append directly from the borrowed UTF-8 input. This avoids allocating a
+  ## UTF-16 sequence and a second encoded string for every translated site.
+  data.appendU32((line.utf16UnitCount() + 1).uint32)
+  for r in line.runes:
+    let cp = r.int.uint32
+    if cp <= 0xFFFF'u32:
+      data.appendU16(cp.uint16)
+    else:
+      let value = cp - 0x10000'u32
+      data.appendU16((0xD800'u32 + (value shr 10)).uint16)
+      data.appendU16((0xDC00'u32 + (value and 0x3FF'u32)).uint16)
+  data.appendU16(0'u16)
+
+proc encodeEcString*(line: string): string =
+  result = newStringOfCap(4 + (line.len * 2) + 2)
+  result.appendEcString(line)

@@ -5,6 +5,7 @@ import os, re, tables, memfiles, strutils, unicode, sets, json
 # Include the architecture
 include models
 include utils
+include translation_engine
 include dummy_class
 include gff3_class
 include gff4_class
@@ -20,15 +21,15 @@ when isMainModule:
 
   for _ in 0 ..< 1000:
 
-    var tlkDict = newTable[uint32, TlkEntry]()
+    let discovered = newDiscoveryIndex()
     let ext = file_path.splitFile().ext.toLowerAscii()
     
     if ext in [".are", ".lst", ".utc", ".uti", ".utm", ".utp", ".utt"]:
-      let f = initGff3File("standalone", file_path, tlkDict)
+      let f = initGff3File("standalone", file_path, discovered)
       f.findTlkStrings()
       f.close()
     else:
-      let f = initGff4File(data, "standalone", file_path, tlkDict)
+      let f = initGff4File("standalone", file_path, discovered)
       f.findTlkStrings()
       f.close()
 

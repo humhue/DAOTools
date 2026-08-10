@@ -6,6 +6,8 @@
 !.github/**
 !src/
 !src/**
+!tests/
+!tests/**
 src/gui.app
 !vendor
 !vendor/**
