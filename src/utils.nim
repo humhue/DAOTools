@@ -27,6 +27,59 @@ proc getTypeName*(type_id: uint16): string =
   of 0xFFFF: "Generic"
   else: "Unknown"
 
+proc isGffIdNameChar(value: char): bool {.inline.} =
+  value in {'a'..'z', 'A'..'Z', '0'..'9', '_'}
+
+proc isRegexWhitespace(value: char): bool {.inline.} =
+  value in {' ', '\t', '\r', '\n', '\v', '\f'}
+
+proc parseGffIdLine*(line: string): tuple[matched: bool, name: string, id: uint32] =
+  ## Parses the same prefix accepted by the former PCRE expression:
+  ## [GC]FF(?:STRUCT)?_(\w+)\s*=\s*(\d+)
+  ## The source list is ASCII, and trailing comments or punctuation are allowed.
+  if line.len < 4 or
+      (line[0] != 'G' and line[0] != 'C') or
+      line[1] != 'F' or line[2] != 'F':
+    return
+
+  var cursor = 3
+  if line.len - cursor >= 6 and
+      line[cursor] == 'S' and line[cursor + 1] == 'T' and
+      line[cursor + 2] == 'R' and line[cursor + 3] == 'U' and
+      line[cursor + 4] == 'C' and line[cursor + 5] == 'T':
+    cursor += 6
+
+  if cursor >= line.len or line[cursor] != '_':
+    return
+  cursor += 1
+
+  let nameStart = cursor
+  while cursor < line.len and line[cursor].isGffIdNameChar():
+    cursor += 1
+  if cursor == nameStart:
+    return
+  let nameEnd = cursor
+
+  while cursor < line.len and line[cursor].isRegexWhitespace():
+    cursor += 1
+  if cursor >= line.len or line[cursor] != '=':
+    return
+  cursor += 1
+  while cursor < line.len and line[cursor].isRegexWhitespace():
+    cursor += 1
+
+  let idStart = cursor
+  while cursor < line.len and line[cursor] in {'0'..'9'}:
+    cursor += 1
+  if cursor == idStart:
+    return
+
+  result = (
+    matched: true,
+    name: line[nameStart ..< nameEnd],
+    id: line[idStart ..< cursor].parseUInt().uint32
+  )
+
 proc loadIdsAndNames*() =
   # Read the file AT COMPILE TIME and embed it in the binary
   const gffIdListStr = staticRead("GFFIDList.txt") 
@@ -34,17 +87,14 @@ proc loadIdsAndNames*() =
   # the DA toolset doesn't load __deprecated__ labels, but we are doing it anyway
   # we are loading X_NO_LONGER_USED_X_GFF_ITEM_ONHIT_EFFECTID and similar as well
   # even //GFF_AREAGRID_AREA_ID
-  # 2479 entries
-  let pattern = re"[GC]FF(?:STRUCT)?_(\w+)\s*=\s*(\d+)"
-  
+  # 2441 entries
+
   # Iterate over the embedded string instead of the file system
-  for line in gffIdListStr.splitLines(): 
-    var matches: array[2, string]
-    if line.match(pattern, matches):
-      let name = matches[0]
-      let id = matches[1].parseUInt.uint32
-      name_by_id[id] = name
-      id_by_name[name] = id
+  for line in gffIdListStr.splitLines():
+    let parsed = line.parseGffIdLine()
+    if parsed.matched:
+      name_by_id[parsed.id] = parsed.name
+      id_by_name[parsed.name] = parsed.id
 
 # We call this immediately as soon as the module gets imported
 loadIdsAndNames()

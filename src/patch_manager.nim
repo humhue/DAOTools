@@ -1,6 +1,6 @@
 # patch_manager.nim
 
-import os, re, tables, memfiles, strutils, unicode, sets, json, streams, algorithm, times
+import os, tables, memfiles, strutils, unicode, sets, json, streams, algorithm, times
 import zippy/ziparchives
 
 include models

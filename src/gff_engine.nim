@@ -1,6 +1,6 @@
 # gff_engine.nim
 
-import os, re, tables, memfiles, strutils, unicode, sets, json
+import os, tables, memfiles, strutils, unicode, sets, json
 
 # Include the architecture
 include models
